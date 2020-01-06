@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="?attr/actionBarSize"
+    android:weightSum="100"
+    android:orientation="horizontal"
+    android:background="@color/colorPrimary"
+    android:gravity="center_vertical">
+
+    <RelativeLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="10"
+        android:id="@+id/back_arrow_container"
+        android:visibility="visible">
+
+        <ImageButton
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/ic_arrow_back_black_24dp"
+            android:background="?attr/selectableItemBackground"
+            android:id="@+id/toolbar_back_arrow"
+            android:layout_centerInParent="true"/>
+
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="10"
+        android:id="@+id/check_container"
+        android:visibility="gone">
+
+        <ImageButton
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/ic_check_black_24dp"
+            android:background="?attr/selectableItemBackground"
+            android:id="@+id/toolbar_check"
+            android:layout_centerInParent="true"/>
+
+    </RelativeLayout>
+
+
+    <TextView
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="85"
+        android:id="@+id/note_text_title"
+        android:text="@string/exampleStr"
+        android:textColor="@color/black"
+        android:layout_marginStart="15dp"
+        android:textSize="23sp"
+        android:visibility="visible"/>
+
+    <EditText
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="85"
+        android:id="@+id/note_edit_title"
+        android:text="@string/exampleStr"
+        android:textColor="@color/black"
+        android:layout_marginStart="15dp"
+        android:textSize="23sp"
+        android:visibility="gone"
+        android:background="@color/white"
+        android:padding="2dp"/>
+
+</LinearLayout>
