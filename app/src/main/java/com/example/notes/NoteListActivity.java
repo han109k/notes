@@ -1,8 +1,10 @@
 package com.example.notes;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.lifecycle.Observer;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -15,36 +17,59 @@ import android.view.View;
 
 import com.example.notes.adapters.NotesRecyclerAdapter;
 import com.example.notes.models.Note;
+import com.example.notes.persistence.NoteRepository;
 import com.example.notes.util.VerticalSpacingItemDecorator;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class NoteListActivity extends AppCompatActivity implements NotesRecyclerAdapter.OnNoteListener, FloatingActionButton.OnClickListener {
 
     private static final String TAG = "NoteListActivity";
 
     // UI components
-    private RecyclerView mRecyclerView; // m is prepended to variable name because this is global variable
+    private RecyclerView mRecyclerView; // (convention) m is prepended to variable name because this is global variable
 
     // variables
     private ArrayList<Note> mNotes = new ArrayList<>();
     private NotesRecyclerAdapter mNoteRecyclerAdapter;
+    private NoteRepository mNoteRepository;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_notes_list);
 
+        Log.d(TAG, "onCreate: thread : " + Thread.currentThread().getName());
+
         mRecyclerView = findViewById(R.id.recyclerView);
         findViewById(R.id.fab).setOnClickListener(this);
 
+        mNoteRepository = new NoteRepository(this);
+
         initRecyclerView();
 
-        insertFakeNotes();
+        retrieveNotes();
+        //insertFakeNotes();
 
         setSupportActionBar((Toolbar) findViewById(R.id.notes_toolbar));
         setTitle("Notes");
+    }
+
+    private void retrieveNotes(){
+        mNoteRepository.retrieveNotesTask().observe(this, new Observer<List<Note>>() {  // anytime database is changed i.e delete update add, onChanged method will be called
+            @Override
+            public void onChanged(@Nullable List<Note> notes) {
+                if(mNotes.size() > 0){
+                    mNotes.clear();
+                }
+                if(notes != null){
+                    mNotes.addAll(notes);
+                }
+                mNoteRecyclerAdapter.notifyDataSetChanged();
+            }
+        });
     }
 
     private void insertFakeNotes(){
@@ -52,7 +77,7 @@ public class NoteListActivity extends AppCompatActivity implements NotesRecycler
             Note note = new Note();
             note.setTitle("title #" + i);
             note.setContent("content #: " + i);
-            note.setTimeStamp("Jan 2019");
+            note.setTimeStamp("Jan 2020");
             mNotes.add(note);
         }
         mNoteRecyclerAdapter.notifyDataSetChanged();
@@ -101,6 +126,8 @@ public class NoteListActivity extends AppCompatActivity implements NotesRecycler
     private void deleteNote(Note note){
         mNotes.remove(note);
         mNoteRecyclerAdapter.notifyDataSetChanged();
+
+        mNoteRepository.deleteNote(note);
     }
 
     // swipe to delete

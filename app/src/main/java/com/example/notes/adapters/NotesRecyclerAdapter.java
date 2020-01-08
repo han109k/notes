@@ -1,5 +1,6 @@
 package com.example.notes.adapters;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,6 +15,8 @@ import com.example.notes.models.Note;
 import java.util.ArrayList;
 
 public class NotesRecyclerAdapter extends RecyclerView.Adapter<NotesRecyclerAdapter.ViewHolder>{
+
+    private static final String TAG = "NotesRecyclerAdapter";
 
     private ArrayList<Note> mNotes = new ArrayList<>();
     private OnNoteListener mOnNoteListener;
@@ -33,8 +36,12 @@ public class NotesRecyclerAdapter extends RecyclerView.Adapter<NotesRecyclerAdap
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
 
-        holder.timeStamp.setText(mNotes.get(position).getTimeStamp());
-        holder.title.setText(mNotes.get(position).getTitle());
+        try{
+            holder.timeStamp.setText(mNotes.get(position).getTimeStamp());
+            holder.title.setText(mNotes.get(position).getTitle());
+        } catch (NullPointerException e) {
+            Log.d(TAG, "onBindViewHolder: NullPointerException : " + e.getMessage());
+        }
     }
 
     @Override

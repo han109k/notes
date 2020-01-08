@@ -5,6 +5,8 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
@@ -16,10 +18,17 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.example.notes.models.Note;
+import com.example.notes.persistence.NoteRepository;
+import com.example.notes.util.Utility;
 
-public class NoteActivity extends AppCompatActivity implements View.OnTouchListener, GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener, View.OnClickListener {
+public class NoteActivity extends AppCompatActivity implements
+        View.OnTouchListener,
+        GestureDetector.OnGestureListener,
+        GestureDetector.OnDoubleTapListener,
+        View.OnClickListener,
+        TextWatcher {
 
-    // const
+    // constants
     private static final String TAG = "NoteActivity";
     private static final int EDIT_MODE_DISABLED = 0;
     private static final int EDIT_MODE_ENABLED = 1;
@@ -31,11 +40,13 @@ public class NoteActivity extends AppCompatActivity implements View.OnTouchListe
     private RelativeLayout mCheckContainer, mBackArrowContainer;
     private ImageButton mCheck, mBackArrow;
 
-    // vars
+    // global variables
     private boolean mIsNewNote;
     private Note mInitialNote;
+    private Note mFinalNote;
     private GestureDetector mGestureDetector;
     private int mMode;
+    private NoteRepository mNoteRepository;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,6 +60,8 @@ public class NoteActivity extends AppCompatActivity implements View.OnTouchListe
         mBackArrowContainer = findViewById(R.id.back_arrow_container);
         mCheck = findViewById(R.id.toolbar_check);
         mBackArrow = findViewById(R.id.toolbar_back_arrow);
+
+        mNoteRepository = new NoteRepository(this);
 
         if(getIncomingIntent()){
             // this is a new note, (EDIT MODE)
@@ -68,23 +81,49 @@ public class NoteActivity extends AppCompatActivity implements View.OnTouchListe
         mGestureDetector = new GestureDetector(this, this);
         mViewTitle.setOnClickListener(this);
         mCheck.setOnClickListener(this);
-        mBackArrow.setOnClickListener(this);   // this refers View.OnClickListener that we implemented
+        mBackArrow.setOnClickListener(this);   // (this) refers View.OnClickListener that we implemented
+        mEditTitle.addTextChangedListener(this);
     }
 
     private boolean getIncomingIntent() {
 
-        mIsNewNote = true;
         mMode = EDIT_MODE_ENABLED;
+        mIsNewNote = true;
 
         if(getIntent().hasExtra("selected_note")){
             mInitialNote = getIntent().getParcelableExtra("selected_note");
-            Log.d(TAG, "getIncomingIntent: " + mInitialNote.toString());
+
+            //mFinalNote = getIntent().getParcelableExtra("selected_note"); //  mInitialNote != mFinalNote  update note problem //
+
+            mFinalNote = new Note();
+            mFinalNote.setTitle(mInitialNote.getTitle());
+            mFinalNote.setContent(mInitialNote.getContent());
+            mFinalNote.setTimeStamp(mInitialNote.getTimeStamp());
+            mFinalNote.setId(mInitialNote.getId());
+
+//            Log.d(TAG, "getIncomingIntent: " + mInitialNote.toString());
 
             mMode = EDIT_MODE_DISABLED;
             mIsNewNote = false;
         }
 
         return mIsNewNote;
+    }
+
+    private void saveChanges(){
+        if(mIsNewNote){ // insert with async
+            saveNewNote();
+        } else {    // update with async
+            updateNote();
+        }
+    }
+
+    private void updateNote(){
+        mNoteRepository.updateNote(mFinalNote);
+    }
+
+    private void saveNewNote(){
+        mNoteRepository.insertNoteTask(mFinalNote);
     }
 
     private void enableContentInteraction(){
@@ -126,6 +165,22 @@ public class NoteActivity extends AppCompatActivity implements View.OnTouchListe
 
         hideSoftKeyboard();
         disableContentInteraction();
+
+        // logic for checking if the note has been changed
+        String temp = mLinedEditText.getText().toString();
+        temp = temp.replace("\n", "");  // removing new line
+        temp = temp.replace(" ", "");   // removing spaces
+        if(temp.length() > 0){
+            mFinalNote.setTitle(mEditTitle.getText().toString());
+            mFinalNote.setContent(mLinedEditText.getText().toString());
+            String timeStamp = Utility.getCurrentTimeStamp();
+            mFinalNote.setTimeStamp(timeStamp);
+
+            if(!mFinalNote.getContent().equals(mInitialNote.getContent())
+                    || !mFinalNote.getTitle().equals(mInitialNote.getTitle())){
+                saveChanges();
+            }
+        }
     }
 
     private void hideSoftKeyboard(){
@@ -146,6 +201,11 @@ public class NoteActivity extends AppCompatActivity implements View.OnTouchListe
     private void setNewNoteProperties() {
         mViewTitle.setText("Note Title");
         mEditTitle.setText("Note Title");
+
+        mInitialNote = new Note();
+        mFinalNote = new Note();
+        mInitialNote.setTitle("Note Title");
+        mFinalNote.setTitle("Note Title");
     }
 
     @Override
@@ -240,5 +300,21 @@ public class NoteActivity extends AppCompatActivity implements View.OnTouchListe
         if(mMode == EDIT_MODE_ENABLED){
             enableEditMode();
         }
+    }
+
+    // TextWatcher overrides
+    @Override
+    public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+    }
+
+    @Override
+    public void onTextChanged(CharSequence s, int start, int before, int count) {
+        mViewTitle.setText(s.toString());
+    }
+
+    @Override
+    public void afterTextChanged(Editable s) {
+
     }
 }

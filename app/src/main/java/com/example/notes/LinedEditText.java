@@ -27,7 +27,7 @@ public class LinedEditText extends AppCompatEditText {
     @Override
     protected void onDraw(Canvas canvas) {
 
-        int height =((View) this.getParent()).getHeight();
+        int height = ((View) this.getParent()).getHeight();
         int lineHieght = getLineHeight();
         int numberOfLines = height / lineHieght;
 
